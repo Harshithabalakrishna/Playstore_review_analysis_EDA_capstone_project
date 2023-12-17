@@ -1,0 +1,510 @@
+# %% [markdown]
+# <a href="https://colab.research.google.com/github/AditiBhattacharya11/PlayStore-Review-Analysis-EDA/blob/main/Play_Store_App_Review_Analysis_EDA_Capstone_Project.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+
+# %% [markdown]
+# ## <b> The Play Store apps data has enormous potential to drive app-making businesses to success. Actionable insights can be drawn for developers to work on and capture the Android market. </b>
+# 
+# ## <b> Each app (row) has values for catergory, rating, size, and more. Another dataset contains customer reviews of the android apps.</b>
+# 
+# ## <b> Explore and analyze the data to discover key factors responsible for app engagement and success. </b>
+
+# %% [markdown]
+# #Google Play Store Apps Exploratory Data Analysis (EDA)
+
+# %% [markdown]
+# Google Play, also branded as the Google Play Store and formerly Android Market, is a digital distribution service operated and developed by Google. It serves as the official app store for certified devices running on the Android operating system and its derivatives as well as ChromeOS, allowing users to browse and download applications developed with the Android software development kit (SDK) and published through Google. Google Play has also served as a digital media store, offering music, books, movies, and television programs. Content that has been purchased on Google Play Movies & TV and Google Play Books can be accessed on a web browser, and through the Android and iOS apps.
+
+# %% [markdown]
+# In the given EDA we try to understand and evaluate Google Play Store Data that has been provided by studying various heads like 'Application', 'Type', 'Installs, 'Rating', etc. By going through the data, doing necessary manipulations and understanding, we'll try to come up with the answers for various questions.
+
+# %% [markdown]
+# # Importing Required Libraries
+
+# %%
+#importing all necessary libraries
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+%matplotlib inline
+# allow matplotlib to plot inline
+
+# %% [markdown]
+# Importing all the necessary libraries to process and work on the databases.
+# 
+
+# %% [markdown]
+# 
+# # DATA
+# 
+# The datasets consist of two CSV files which are play store data.csv and user reviews.csv.
+# 
+# The play store data.csv has 10,841 observations and 13 variables about details of the applications on Google Play.
+# 
+# The user reviews.csv has 64,295 observations and 5 variables about the most relevant 100 reviews for each app and sentiment informations for each review.
+# 
+# The variables of each dataset are as below:
+# 
+# [Google Play Store App Datasets]
+# 
+# **Play store data.csv**
+# 
+# *   App: Application name
+# 
+# *   Rating: Overall user rating of the app
+# 
+# 
+# *   Reviews: Number of user reviews for the app
+# 
+# *   Size: Size of the app
+# 
+# *   Price: Price of the app
+# *   Installs: Number of user downloads/installs for the app
+# *   Type: Paid or Free
+# 
+# *  Content Rating: Age group the app is targeted at - Children / Mature 21+ / Adult
+# *   Genres: An app can belong to multiple genres (apart from its main category)
+# 
+# 
+# **User reviews.csv**
+# 
+# 
+# *  Genres: An app can belong to multiple genres (apart from its main category)
+# 
+# *  App: Name of app
+# 
+# 
+# *  Translated_Review: User review (Preprocessed and translated to English)
+# 
+# 
+# *  Sentiment: Positive/Negative/Neutral (Preprocessed)
+# 
+# 
+# * Sentiment_Polarity: Sentiment polarity score (>0 - positive, <0 - nagative)
+# 
+
+# %%
+from google.colab import drive
+drive.mount('/content/drive')
+
+# %%
+#accessing/reading the dataset
+dfpath='/content/drive/MyDrive/Almabetter/Copy of Play Store Data.csv'
+reviewpath='/content/drive/MyDrive/Almabetter/Copy of User Reviews.csv'
+
+# %%
+playstoredf=pd.read_csv(dfpath)
+
+# %%
+reviewdf=pd.read_csv(reviewpath)
+
+# %% [markdown]
+# * Read the googleplaystore.csv data file of play store dataframe and saved the dataset into a data frame called playstoredf.
+# 
+# * Checked the important information of the dataset using .describe() function.
+# 
+# * Checked the information of the dataset using .info() function.
+# 
+# * Checked the contents of the dataset using .head() function.
+# 
+# ---
+# 
+# 
+
+# %%
+playstoredf.describe(include="all")
+
+
+# %%
+#studying the dataframe's observations, variables and their datatypes
+#finding out first which columns have null values
+playstoredf.info()
+
+# %%
+playstoredf.head()
+
+
+# %% [markdown]
+# * Read the userreview.csv data file of play store dataframe and saved the dataset into a data frame called reviewdf.
+# 
+# * Checked the important information of the dataset using .describe() function.
+# 
+# * Checked the information of the dataset using .info() function.
+# 
+# * Checked the contents of the dataset using .head() function.
+
+# %%
+#getting all te various values
+reviewdf.describe(include="all")
+
+# %%
+#getting the review of the data
+reviewdf.info()
+
+# %%
+reviewdf.head()
+
+# %% [markdown]
+# #Scanning and Cleaning Data:
+# Scaning and Removing missing values To scan the data for missing values, special values and obvious errors, the next steps has been applied.
+# 
+# *Scan the data for missing values using .is.na().sum() function.
+# As the result, the Rating variable has 1474 NAs and Translated_Review variable has 3881 NAs, Type and Content rating has 1 na each, current ver has 8 Nas,android ver has 3 Nas,Sentiment_Subjectivity and Sentiment_Polarity has 3880 each.
+# * Removing NAs from PlayStore Dataframe
+# * Replace the NAs of Rating to the mean value of Rating values.
+# * Remove the NAs of Tranlated_Review using dropna() funtion.
+
+# %%
+#removing all the null values
+playstoredf.dropna()
+
+# %%
+playstoredf.isna().sum()
+
+# %%
+playstoredf['Rating']=playstoredf['Rating'].fillna(playstoredf['Rating'].mean())
+
+# %% [markdown]
+# **Drop duplicate Applications**
+# 
+# Dropping duplicate applications from 'App' by using drop_duplicates function.
+# 
+# 
+
+# %%
+playstoredf.drop_duplicates(subset=['App'], inplace=True)
+
+# %% [markdown]
+# #Cleaning Data:
+# **'Install' Data Cleaning**
+# 
+# Cleaning the "Installs" column by converting the numerical values. Converting install counts to numerical values by removing 'Free' value, "+" andd ',' signs from dataframe.
+
+# %%
+#printing all the unique values of "Installs" head
+playstoredf['Installs'].unique()
+
+# %% [markdown]
+# **Converting install counts to numerical values by removing 'Free' value, "+" and ',' signs from dataframe.**
+# 
+
+# %%
+#Removing "free" , "+" and "," values from data
+installs_list = [i for i in playstoredf['Installs']]
+install_count = []
+for install in installs_list:
+    if 'Free'== install:
+        install='0'
+    if '0'==install:
+        install='0'
+    if ',' in install:
+        install = install.replace(',', '')
+    if '+' in install:
+        install = install.replace('+', '')
+    install = int(install)
+    install_count.append(install)
+        
+playstoredf['Installs_Count'] = install_count
+playstoredf['Installs_Count'] = playstoredf['Installs_Count'].astype(float)
+
+
+# %% [markdown]
+# **Review Column Data Cleaning**
+# 
+# Cleaning the "Review" data and changing type "object" to "float".
+
+# %%
+#changing 'review' data and type from "object to "float
+reviews_list = [i for i in playstoredf['Reviews']]
+
+    
+cleaned_data = []
+for review in reviews_list:
+    if 'M' in review:
+        review = review.replace('M', '')
+        review = float(review) * 1000000  # 1M = 1,000,000
+    cleaned_data.append(review)
+
+playstoredf['Clean_Reviews'] = cleaned_data
+playstoredf['Clean_Reviews'] =playstoredf['Clean_Reviews'].astype(float)
+
+# %% [markdown]
+# **Price Coulmn Data Cleaning**
+# 
+# Cleaning the 'Price' data and changing the "$" and "Everyone" to " " and "0" respectively.
+# 
+# 
+
+# %%
+#cleaning the price data and changing"$" and "everyone" to "" and "0"
+prices_list = [i for i in playstoredf['Price']]
+
+cleaned_data = []
+for price in prices_list:
+    if '$' in price:
+      price = price.replace('$', '')
+    if price=='Everyone':
+      price='0'
+    cleaned_data.append(price)
+
+playstoredf['Price_Updated'] = cleaned_data
+playstoredf['Price_Updated'] = playstoredf['Price_Updated'].astype(float)
+
+# %% [markdown]
+# 
+# #Pie Chart showing distribution of various application category
+# * Firstly taking out all the categories of various apps on PlayStore and finding the total sum of those respective categories.
+# * Using groupby function to convert "Category" into a dataframe.
+# * Using matplotlib to plot pie chart out of the given information by using specific radius of 4, showing percentage distribution.
+
+# %%
+#using groupby funtion to convert category into dataframe
+categorydf= playstoredf.groupby(['Category'])['Category'].count()
+categorydf
+#plotting various categories into piechart
+labels=categorydf.index[1:]
+print(labels)
+values=categorydf.tolist()[1:]
+print(values)
+plt.pie(values, labels =labels, radius=4,autopct='%1.1f%%')
+plt.xticks(rotation=90)
+plt.show
+
+# %% [markdown]
+# #Number of Applications for Each Category
+# Plotting the number of Applications that are in each Category.
+# 
+# Using matplotlib to plot BarGraph of various categories' count.
+# Specifying the figure size, giving title labels.
+
+# %%
+#plotting the number of applications of each category as bar graph
+plt.figure(figsize=(15,10))
+sns.countplot(x='Category', data=playstoredf)
+plt.title('Number of Apps Per Category')
+plt.xticks(rotation=90)
+plt.ylabel('Number of Apps')
+plt.show()
+
+# %% [markdown]
+# Family, Games and tools are the top 3 most installed apps as we can infer from the graph plotted.
+
+# %% [markdown]
+# #Paid and Free Application percentage distribution:
+# Applications on the playstore are of two types:
+# * Paid
+# * Unpaid
+# 
+# Plotting a piechart showing the percentage distribution of both paid and unpaid applications:
+# * Again used groupby function to count the type of applications and take out the sum of the same.
+# * Plotted a pie chart of radius 2.2 with percentage specification.
+# 
+# 
+
+# %%
+#using broupby function to change the type
+categorydf= playstoredf.groupby(['Type'])['Type'].count()
+categorydf
+labels=categorydf.index[1:]
+print(labels)
+values=categorydf.tolist()[1:]
+#plotting the % distribution of both free and paid apps in pie chart
+plt.pie(values, labels =labels, radius=2.2,autopct='%1.0f%%')
+plt.show
+
+# %% [markdown]
+# Free makes 92% of the total Catrgories available.
+
+# %% [markdown]
+# #Application Type Distribution
+# Plotting the application type distribution using bar graphs to show the Number of Paid and Free applications in total categories.
+
+# %%
+#plotting bar graph showing number of applications and their distribtion based on the type(paid/free)
+plt.figure(figsize=(10, 5))
+sns.countplot(playstoredf['Type'])
+plt.title('Type Distribution')
+plt.ylabel('Number of Apps')
+plt.show()
+
+# %% [markdown]
+# Free has more than 8000 no. of apps category wise as compared to paid type.
+
+# %% [markdown]
+# #Number of Installs For Each Category
+
+# %% [markdown]
+# Plotting the Number of Installs in Each category of apps using a bargraph representation by using the Install_Count dataframe, with figure size of 15,10.
+
+# %%
+#finding the sum of total insatlls using .sum function
+categories = playstoredf.groupby('Category')
+category_installs_sum_df = categories[['Installs_Count']].sum()
+category_installs_sum_df = category_installs_sum_df.reset_index()  # to convert groupby object into dataframe
+
+#plotting bar graph for number of installs for each category of apps
+plt.figure(figsize=(15, 10))
+sns.barplot(x='Category', y='Installs_Count', data=category_installs_sum_df)
+plt.xticks(rotation=90)
+plt.ylabel('Installs (e+10)')
+plt.title('Number of Installs For Each Category')
+plt.show() 
+
+# %% [markdown]
+# From this distribution plotting of number of installs for each category, we can see that most of the apps being downloaded and installed are from the categories of 'Game' and 'Communication
+
+# %% [markdown]
+# #Relationship of Rating with Reviews, Installs and Price
+
+# %%
+#finding the sum of ratings for apps
+rating_df = playstoredf.groupby('Rating').sum().reset_index()
+
+#plotting comparing graphs using the various info and finding corelation between reviews, install count and price with respect to rating
+fig, axes = plt.subplots(1, 3, figsize=(14, 3))
+
+axes[0].plot(rating_df['Rating'], rating_df['Clean_Reviews'], 'r')
+axes[0].set_xlabel('Rating')
+axes[0].set_ylabel('Reviews')
+axes[0].set_title('Reviews Per Rating')
+
+axes[1].plot(rating_df['Rating'], rating_df['Installs_Count'], 'g')
+axes[1].set_xlabel('Rating')
+axes[1].set_ylabel('Installs (e+10)')
+axes[1].set_title('Installs Per Rating')
+
+axes[2].plot(rating_df['Rating'], rating_df['Price_Updated'], 'k')
+axes[2].set_xlabel('Rating')
+axes[2].set_ylabel('Price')
+axes[2].set_title('Price Per Rating')
+
+plt.tight_layout(pad=2)
+plt.show()
+
+
+# %% [markdown]
+# From the above plottings, we can imply that most of the apps with higher rating range of 4.0 - 4.7 are having high amount of reviews and installs. In terms of price, it doesn't reflect a direct relationship with rating, as we could see a fluctuation in term of pricing even at the range of high rating.
+
+# %% [markdown]
+# #Correlation
+# Finding out the correlation between Rating, Install_Counts, Price_Updated and Clean Reviews by using .corr() function.
+# * Plotting the given dataframe of correlation using Seaborn .heatmap 
+# * Modifying the figure size with respective values.
+
+# %%
+#plotting a corelation graph to find corelation between rating, price, reviews and installs
+corr_df=playstoredf.corr()
+
+# %%
+plt.figure(figsize=(15,10))
+sns.heatmap(corr_df)
+
+# %% [markdown]
+# This Crorelation shows that Install_counts and Clean_reviews have the highest level of correlation amongst these given heads.
+
+# %% [markdown]
+# #Questions and Observations
+
+# %% [markdown]
+# **What are the top 10 most installed applications?**
+
+# %%
+#checking the top 10 most installed applications 
+df = playstoredf.sort_values(by=['Installs_Count'], ascending=False)
+df.head(10)
+
+# %%
+print(f'Top 10 most installed applications are :\n', ','.join(df['App'].head(10)))
+
+# %% [markdown]
+# **What are the top 10 Applications based on rating?**
+
+# %%
+#checking the top 10 applications based on ratings
+best_reviewed_apps= playstoredf.sort_values(by=['Rating'], ascending=False)
+best_reviewed_apps.head(10)
+
+
+# %%
+print(f'Top 10 highest rated applications are :\n', ','.join(best_reviewed_apps['App'].head(10)))
+
+# %% [markdown]
+# **What are the top 5 most downloaded applications that are paid?**
+
+# %%
+#sorting the apps based on paid type
+df1 = playstoredf[playstoredf['Type'] == 'Paid']
+
+#showing top 5 most installed "paid" apps
+result1=df1.sort_values(by=['Installs_Count'], ascending=False)
+result1
+
+# %%
+print(f'Top 5 paid most installed applications are :\n', ','.join(result1['App'].head(5)))
+
+# %% [markdown]
+# **What are the top 5 most installed Free Applications?**
+
+# %%
+#sorting apps based on "free" type
+df2 = playstoredf[playstoredf['Type'] == 'Free']
+
+#showing top 5 most installed free apps
+result=df2.sort_values(by=['Installs_Count'], ascending=False).head(5)
+result
+
+# %%
+print(f'Top 5 free most installed applications are :\n', ','.join(result['App']))
+
+# %% [markdown]
+# **What are the top 3 most installed application category?**
+
+# %%
+#sorting most installed category of apps
+df3 = playstoredf.sort_values(by=['Installs_Count'], ascending=False)
+
+#showing top 3 most installed category of apps
+Top_3_Installs=df3.head(3)["Category"]
+print(Top_3_Installs)
+
+# %% [markdown]
+# **What are the 5 most expensive applications?**
+
+# %%
+#sorting apps based on price
+df4 = playstoredf.sort_values(by=['Price'], ascending=False)
+#showing top 5 most expensive apps
+df4.head(5)
+
+# %%
+print(f'The top 5 most expensive apps are:\n {", ".join(df4["App"].head(5))}')
+
+# %% [markdown]
+# #CONCLUSION
+
+# %% [markdown]
+# By analyzing the data closely, we have inferred a few of the observations.
+# 
+# •	Google PlayStore has 2 types of applications, mainly Free and Paid.
+# 
+# •	There are various categories amongst which there are multiple applications- Three major apps are Family, Tools and Games.
+# 
+# •	Applications receive both Ratings and Reviews and can be respectively graded too.
+# 
+# •	Applications are installed by various users and mostly installed applications can be found, along with the information of their category, rating, type etc.
+# 
+# •	Business, Game, Family and Tools have the highest number of applications.
+# 
+# •	Free applications make 98% of the total of Applications, with a total count of more than 8000.
+# 
+# •	Communication, Games and Tools are the most installed Application category.
+# 
+# •	Most of the apps with higher rating range of 4.0 4.7 are having high amount of reviews and installs. In terms of price, it doesn't reflect a direct relationship with rating, as we could see a fluctuation in term of pricing even at the range of high 
+# 
+# •	Install Counts and Reviews are the most correlated and influence a lot of the downloads
+# 
+# Thus a lot of factors play an important role in the user usage and popularity of any application. It can be because of the price of the application, based of the rating and reviews, also because of the number of installs, which in turn also affects the decision making of any app.
+# 
+# 
+
+
